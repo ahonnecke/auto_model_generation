@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2023-03-23 Thu 15:10 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Automating rote model creation from real JSON</title>
+<meta name="author" content="Ashton Honnecke" />
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Automating rote model creation from real JSON</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org01a28fc">1. Introduction</a></li>
+<li><a href="#org1a4026c">2. Create models with datamodel-codegen</a>
+<ul>
+<li><a href="#org9266eea">2.1. Grab an example of real word data</a></li>
+<li><a href="#org56c9dbd">2.2. Install python utilities</a></li>
+<li><a href="#org4e9cc1d">2.3. Generate the python model</a></li>
+<li><a href="#org68dcf41">2.4. Update the python model, by automating the generation</a></li>
+<li><a href="#org1c2066b">2.5. Create a factory</a>
+<ul>
+<li><a href="#org9429dab">2.5.1. Install packages</a></li>
+<li><a href="#orge043771">2.5.2. Write a Factory Class</a></li>
+<li><a href="#org0716914">2.5.3. Use the Factory Class in Unit Tests</a></li>
+<li><a href="#org4d36221">2.5.4. Run the tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org46d293c">3. Applying shape to the data with faker</a></li>
+<li><a href="#orgc62f426">4. Benefits of Using Mock Data</a></li>
+<li><a href="#org79fb1f9">5. I was promised complex data</a>
+<ul>
+<li><a href="#org5ae3085">5.1. Bonus model</a></li>
+</ul>
+</li>
+<li><a href="#org60af84d">6. Conclusion</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org01a28fc" class="outline-2">
+<h2 id="org01a28fc"><span class="section-number-2">1.</span> Introduction</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+As a developer, you may come across a situation where you need to generate fake data for unit tests, but the data must be structured and complex enough to accurately mimic real-world data. The traditional approach of manually generating fake data, or even something that&rsquo;s partially automated (faker for instance) can be time-consuming and inefficient, especially when dealing with large and complex datasets, particularly nested data. This blog post will show you how to use the Python ecosystem to generate usable models and their associated test from real-world JSON data in a scalable and efficient manner. We will use datamodel-codegen and pydantic-factories to generate mock data.
+</p>
+
+<p>
+The code examples (and this .org file itself, how very meta) are available on github <a href="https://github.com/ahonnecke/auto_model_generation">Public repository for automatic model generation example project</a>
+</p>
+</div>
+</div>
+
+<div id="outline-container-org1a4026c" class="outline-2">
+<h2 id="org1a4026c"><span class="section-number-2">2.</span> Create models with datamodel-codegen</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+The first step is to get an example of the JSON data that you want to mock. For this example, let&rsquo;s assume an extremely trivial case in which we have a JSON file with data about customers that we want to mock for unit testing. We will look at how to use the datamodel-code-generator to generate a pydantic model from this JSON file.  This is not really representative of any sort of real world usage; there&rsquo;s little reason to build an object to contain one string.  We&rsquo;re focusing on the process in this step.
+</p>
+</div>
+
+<div id="outline-container-org9266eea" class="outline-3">
+<h3 id="org9266eea"><span class="section-number-3">2.1.</span> Grab an example of real word data</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+We are going to use a very simple json blob. To reiterate: this is overly simple for demonstration purposes.  If our data were really this trivial, we would not see much usefulness in automating the process.  In actual usage you will likely want to grab this from your logs or listen into a data stream to get a full payload.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json"><span style="color: #bbc2cf; background-color: #282c34;">{</span>
+    <span style="color: #51afef;">"name"</span>: <span style="color: #98be65;">"Chester Tester"</span>,
+    <span style="color: #51afef;">"email"</span>: <span style="color: #98be65;">"chester@test.com"</span>,
+    <span style="color: #51afef;">"role"</span>: <span style="color: #98be65;">"code monkey"</span>,
+    <span style="color: #51afef;">"customerId"</span>: <span style="color: #a9a1e1;">1</span>
+<span style="color: #bbc2cf; background-color: #282c34;">}</span>
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org56c9dbd" class="outline-3">
+<h3 id="org56c9dbd"><span class="section-number-3">2.2.</span> Install python utilities</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+To install datamodel-code-generator, run the following command:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #51afef; font-weight: bold;">pip</span> install datamodel-code-generator
+</pre>
+</div>
+
+<p>
+Once you have installed datamodel-code-generator, run the following command to generate a pydantic model from your JSON file:
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4e9cc1d" class="outline-3">
+<h3 id="org4e9cc1d"><span class="section-number-3">2.3.</span> Generate the python model</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+I&rsquo;m providing the flags that I generally start with, but the utility supports many other options and formats.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #51afef; font-weight: bold;">datamodel-codegen</span> <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--input</span> customer.json <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--output</span> customer_model.py <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--input-file-type</span> json <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--snake-case-field</span> <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--allow-population-by-field-name</span> <span style="color: #98be65;">\</span>
+    <span style="color: #a9a1e1;">--class-name</span> Customer
+</pre>
+</div>
+
+<p>
+these flags are used to specify the input and output files, define the input file type, and customize the output code by converting field names to snake<sub>case</sub>, allowing population by field name, and specifying the name of the generated class.
+</p>
+
+<ul class="org-ul">
+<li>&#x2013;input customer.json: This flag specifies the input file for the command, which in this case is customer.json.</li>
+<li>&#x2013;output customer<sub>model.py</sub>: This flag specifies the output file for the command, which in this case is customer<sub>model.py</sub>.</li>
+<li>&#x2013;input-file-type json: This flag specifies the type of input file being used, which in this case is JSON.</li>
+<li>&#x2013;snake-case-field: This flag tells the code generator to convert all field names to snake<sub>case</sub> in the output code.</li>
+<li>&#x2013;allow-population-by-field-name: This flag allows the generated code to populate the model fields using field names, rather than using positional arguments.</li>
+<li>&#x2013;class-name Customer: This flag specifies the name of the generated class in the output code, which in this case is Customer.</li>
+</ul>
+
+<p>
+This will generate a pydantic model named &ldquo;Customer&rdquo; in a file named &ldquo;customer<sub>model.py</sub>&rdquo;.  Of note, the incoming data is in camel case (which is not generally considered &ldquo;pythonic&rdquo;, so we have added flags to rectify that; however, we should expect incoming data to be in camel case, so the model needs to support incoming camel case), this is reflected in the field alias below.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class Customer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org68dcf41" class="outline-3">
+<h3 id="org68dcf41"><span class="section-number-3">2.4.</span> Update the python model, by automating the generation</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+Data changes, and it&rsquo;s reasonable to expect that any payload will grow and evolve over time, as such, our models should be able to grow and change with the upstream changes.  I&rsquo;m lazy (see this post for evidence!) and I don&rsquo;t want to do anything more than once, so in order to support rapid, arbitrary and capricious changes, I like to script the model creation!  This has the additional benefit of documenting the options used for future reference.
+</p>
+
+<p>
+The following script references a json blob in the fixtures directory (which can also be used in other tests), and when executed, will populate (or repopulate) a model called BaseCustomer that can be extended (and doing so is recommended because it gives use the ability to regenerate the models easily and as needed). Bonus activity: you can put this script it your CI process and have it run, and then fail if the model output is different.
+</p>
+
+<p>
+The following bash script has a reusable function that can be reused on multiple models by adding another call to a different fixture.
+</p>
+
+<p>
+Model generation script:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #5B6268;">#!/usr/bin/</span><span style="color: #51afef;">env</span><span style="color: #5B6268;"> bash</span>
+
+<span style="color: #c678dd;">generate</span><span style="color: #51afef;">()</span> <span style="color: #51afef;">{</span>
+    <span style="color: #51afef; font-weight: bold;">datamodel-codegen</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--input</span> <span style="color: #98be65;">'$1'</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--input-file-type</span> json <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--class-name</span> <span style="color: #98be65;">'$2'</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--snake-case-field</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--allow-population-by-field-name</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--output</span> <span style="color: #98be65;">'$3'</span>
+<span style="color: #51afef;">}</span>
+
+<span style="color: #51afef; font-weight: bold;">generate</span> <span style="color: #98be65;">"customer.json"</span> <span style="color: #98be65;">"BaseCustomer"</span> <span style="color: #98be65;">"base_customer.py"</span>
+</pre>
+</div>
+
+<p>
+The following code block has both the base and customer object in the same file, this is not very compatible with the above script that regenerates the file
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+class BaseCustomer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-py">from base_customer import BaseCustomer
+
+class Customer(BaseCustomer):
+    """Extend the auto gen customer; this is where customization goes, manuan changes here will persist."""
+    pass
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-org1c2066b" class="outline-3">
+<h3 id="org1c2066b"><span class="section-number-3">2.5.</span> Create a factory</h3>
+<div class="outline-text-3" id="text-2-5">
+</div>
+<div id="outline-container-org9429dab" class="outline-4">
+<h4 id="org9429dab"><span class="section-number-4">2.5.1.</span> Install packages</h4>
+<div class="outline-text-4" id="text-2-5-1">
+<p>
+Next, we need to install pydantic-factories, which is a package that provides a factory function for generating mock data for pydantic models.
+</p>
+
+<p>
+To install pydantic-factories, run the following command:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #51afef; font-weight: bold;">pip</span> install pydantic-factories
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orge043771" class="outline-4">
+<h4 id="orge043771"><span class="section-number-4">2.5.2.</span> Write a Factory Class</h4>
+<div class="outline-text-4" id="text-2-5-2">
+<p>
+Now that we have our pydantic model and the pydantic-factories package, we can write a factory function that will generate mock data for our model.  The pydantic factories library will take a pydantic model and build mock instances that conform to the data types in the model.
+</p>
+
+<p>
+Here is an example factory function that generates a random customer:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+</pre>
+</div>
+
+<p>
+As you can see, this is almost entirely boilerplate, the factory class name and the model class name are the only changes required. This factory function will generate a new mock Customer instance with a random value for each class member every time it is called.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org0716914" class="outline-4">
+<h4 id="org0716914"><span class="section-number-4">2.5.3.</span> Use the Factory Class in Unit Tests</h4>
+<div class="outline-text-4" id="text-2-5-3">
+<p>
+On to the meat of the process.  This is the point of the process.
+</p>
+
+<p>
+To use our factory function in unit tests, we need to add it to our conftest.py file. The conftest.py file is a shared space for fixtures, so all the unit tests have access to the faked models, simple by adding the fixture name to the fuction signature.
+</p>
+
+<p>
+Here is an example conftest.py file that defines a fixture named &ldquo;customer&rdquo;:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">import pytest
+
+from customer_factory import MockCustomerFactory
+
+@pytest.fixture
+def customer():
+    return MockCustomerFactory.build()
+</pre>
+</div>
+
+<p>
+Now we can use the &ldquo;customer&rdquo; fixture in our unit tests to generate an arbitrary number of Customer instances with random data.
+</p>
+
+<p>
+Here is an example test case that uses the &ldquo;customer&rdquo; fixture to generate 10 Customer instances:
+</p>
+</div>
+</div>
+
+<div id="outline-container-org4d36221" class="outline-4">
+<h4 id="org4d36221"><span class="section-number-4">2.5.4.</span> Run the tests</h4>
+<div class="outline-text-4" id="text-2-5-4">
+<div class="org-src-container">
+<pre class="src src-py">def test_generate_customers(customer):
+    customers = [customer for _ in range(25)]
+    assert len(customers) == 25
+    breakpoint()
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-bash">ahonnecke@antonym:~/src/blog/mocking_json<span style="color: #51afef;">$</span> <span style="color: #a9a1e1; font-style: italic;">pytest</span> .
+<span style="color: #51afef; font-weight: bold;">==================</span> test session starts ==================
+<span style="color: #51afef; font-weight: bold;">test_customer.py</span>
+<span style="color: #51afef;">&gt;</span> /home/ahonnecke/src/blog/mocking_json/test_customer.py<span style="color: #51afef;">(</span><span style="color: #51afef; font-weight: bold;">19</span><span style="color: #51afef;">)</span><span style="color: #51afef; font-weight: bold;">test_customer</span><span style="color: #51afef;">()</span>-<span style="color: #51afef;">&gt;</span>None
+<span style="color: #51afef; font-weight: bold;">-</span><span style="color: #51afef;">&gt;</span> breakpoint<span style="color: #51afef;">()</span>
+<span style="color: #51afef;">(</span><span style="color: #51afef; font-weight: bold;">Pdb</span><span style="color: #51afef;">)</span> print<span style="color: #51afef;">(</span>customers<span style="color: #51afef;">)</span>
+<span style="color: #51afef;">[</span>
+    Customer<span style="color: #c678dd;">(</span>
+        <span style="color: #dcaeea;">name</span>=<span style="color: #98be65;">"aopjSxhgSTqWATggcDml"</span>,
+        <span style="color: #dcaeea;">email</span>=<span style="color: #98be65;">"LzDicaTzPTgxHPEOyhFy"</span>,
+        <span style="color: #dcaeea;">role</span>=<span style="color: #98be65;">"otJqpbeNjjRFSdvcoaWO"</span>,
+        <span style="color: #dcaeea;">customer_id</span>=1896,
+    <span style="color: #c678dd;">)</span>,
+    Customer<span style="color: #c678dd;">(</span>
+        <span style="color: #dcaeea;">name</span>=<span style="color: #98be65;">"nvqooVXmZVzaYPWKZgSz"</span>,
+        <span style="color: #dcaeea;">email</span>=<span style="color: #98be65;">"PBDygYKPQGZMLTbHFCVb"</span>,
+        <span style="color: #dcaeea;">role</span>=<span style="color: #98be65;">"eDGHYCsSxchsKNwdcVDR"</span>,
+        <span style="color: #dcaeea;">customer_id</span>=5242,
+    <span style="color: #c678dd;">)</span>,
+    Customer<span style="color: #c678dd;">(</span>
+        <span style="color: #dcaeea;">name</span>=<span style="color: #98be65;">"lDcjZAQarzSrReNAtCCB"</span>,
+        <span style="color: #dcaeea;">email</span>=<span style="color: #98be65;">"QaTevLqUWPgsBSSvsthM"</span>,
+        <span style="color: #dcaeea;">role</span>=<span style="color: #98be65;">"iAdOjDkrjZsBmFTamHwf"</span>,
+        <span style="color: #dcaeea;">customer_id</span>=9581,
+    <span style="color: #c678dd;">)</span>,
+    Customer<span style="color: #c678dd;">(</span>
+        <span style="color: #dcaeea;">name</span>=<span style="color: #98be65;">"pfXuKloegkcnsDeAQKxx"</span>,
+        <span style="color: #dcaeea;">email</span>=<span style="color: #98be65;">"ifaWVKWTpJMIukaJtJfV"</span>,
+        <span style="color: #dcaeea;">role</span>=<span style="color: #98be65;">"NElmZelZqHupYuqVvIZf"</span>,
+        <span style="color: #dcaeea;">customer_id</span>=7674,
+    <span style="color: #c678dd;">)</span>,
+    Customer<span style="color: #c678dd;">(</span>
+        <span style="color: #dcaeea;">name</span>=<span style="color: #98be65;">"EvAMzosabwOrKcXEsMjr"</span>,
+        <span style="color: #dcaeea;">email</span>=<span style="color: #98be65;">"IXNVyOElYOCwwJLeTBmD"</span>,
+        <span style="color: #dcaeea;">role</span>=<span style="color: #98be65;">"YNxfpRclnbLNNUSRJJRN"</span>,
+        <span style="color: #dcaeea;">customer_id</span>=6280,
+    <span style="color: #c678dd;">)</span>,
+<span style="color: #51afef;">]</span>
+<span style="color: #51afef;">(</span><span style="color: #51afef; font-weight: bold;">Pdb</span><span style="color: #51afef;">)</span>
+</pre>
+</div>
+
+<p>
+Performing some trivial inspection of the resulting array of objects yields some populated data with sane-ish defaults:
+This gives us an arbitrary number of objects, with differing, albeit nonsensical data.
+</p>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org46d293c" class="outline-2">
+<h2 id="org46d293c"><span class="section-number-2">3.</span> Applying shape to the data with faker</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Sometimes, a plain string or int is not enough, fortunately we can overwrite the mock data with yet another library from the ecosystem, `faker`.  I&rsquo;m omitting the install step this time, and we will be altering non-generated code in the factory.  We&rsquo;re going to leave the customer id alone, but impose some structure on the remaining values.  I&rsquo;m using faker here (because it&rsquo;s straightforward), but factory boy and other fuzzy mock data solutions can make this more robust.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+from faker import Faker
+
+FAKE = Faker() # Seed the fake data generator
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+
+    email: str = FAKE.email()
+    name: str = FAKE.name()
+    role: str = FAKE.job()
+</pre>
+</div>
+
+<p>
+Which will generate objects that look more like real data (below), but for a large majority of the uses, a random string will suffice.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-py">Customer(
+        name="Elizabeth Rush",
+        email="michael72@example.org",
+        role="Geneticist, molecular",
+        customer_id=7732,
+    ),
+</pre>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgc62f426" class="outline-2">
+<h2 id="orgc62f426"><span class="section-number-2">4.</span> Benefits of Using Mock Data</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Using mock data generated from pydantic models has several benefits:
+</p>
+
+<ul class="org-ul">
+<li>It allows us to generate an arbitrary number of valid instantiations of a given model that match the shape of the original JSON data.</li>
+<li>It encourages the use of objects instead of dicts, which reduces data mutability and allows developers to write logic for well-formed models, making the code more stable and deterministic.</li>
+<li>It provides intrinsic motivation for developers to use structured models in place of mutable dicts, and it does this by making it easy to write tests because the models are almost free.</li>
+<li>It provides the ability to write and perform tests that use a large number of models with the same shape, but unique data values.</li>
+<li>It allows for strongly typing model variables, which enables static type checking with mypy and better autocompletion. This allows developers to focus on the intent of their code rather than the mechanics of how it works.</li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-org79fb1f9" class="outline-2">
+<h2 id="org79fb1f9"><span class="section-number-2">5.</span> I was promised complex data</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+If I&rsquo;m going to have to manually write my mock factories, then what am I generating data for in the first place?
+</p>
+
+<p>
+When this process was first designed, it was used to map a very extensive, and frankly exhaustive data set for basic safety message payloads (the ones emitted by connected vehicle) and other specs that are very long and dry.  Those are so long and dry that they are actually a bit long for this post, so I went looking for some nested json, and came across the blob below (which I think we can all agree is long enough) that should expose the power of this process.
+</p>
+
+<p>
+Here&rsquo;s some donut defining json I found, and
+</p>
+
+<div class="org-src-container">
+<pre class="src src-json"><span style="color: #bbc2cf; background-color: #282c34;">{</span>
+    <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"0001"</span>,
+    <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"donut"</span>,
+    <span style="color: #51afef;">"name"</span>: <span style="color: #98be65;">"Cake"</span>,
+    <span style="color: #51afef;">"ppu"</span>: <span style="color: #a9a1e1;">0.55</span>,
+    <span style="color: #51afef;">"batters"</span>: <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+        <span style="color: #51afef;">"batter"</span>: <span style="color: #bbc2cf; background-color: #282c34;">[{</span>
+                <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"1001"</span>,
+                <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Regular"</span>
+            <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+            <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+                <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"1002"</span>,
+                <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Chocolate"</span>
+            <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+            <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+                <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"1003"</span>,
+                <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Blueberry"</span>
+            <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+            <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+                <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"1004"</span>,
+                <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Devil's Food"</span>
+            <span style="color: #bbc2cf; background-color: #282c34;">}</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">]</span>
+    <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+    <span style="color: #51afef;">"topping"</span>: <span style="color: #bbc2cf; background-color: #282c34;">[{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5001"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"None"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5002"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Glazed"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5005"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Sugar"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5007"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Powdered Sugar"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5006"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Chocolate with Sprinkles"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5003"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Chocolate"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>,
+        <span style="color: #bbc2cf; background-color: #282c34;">{</span>
+            <span style="color: #51afef;">"id"</span>: <span style="color: #98be65;">"5004"</span>,
+            <span style="color: #51afef;">"type"</span>: <span style="color: #98be65;">"Maple"</span>
+        <span style="color: #bbc2cf; background-color: #282c34;">}</span>
+    <span style="color: #bbc2cf; background-color: #282c34;">]</span>
+<span style="color: #bbc2cf; background-color: #282c34;">}</span>
+</pre>
+</div>
+
+<p>
+If you will recall the generate script from above, we simply add one line:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-bash"><span style="color: #5B6268;">#!/usr/bin/</span><span style="color: #51afef;">env</span><span style="color: #5B6268;"> bash</span>
+
+<span style="color: #c678dd;">generate</span><span style="color: #51afef;">()</span> <span style="color: #51afef;">{</span>
+    <span style="color: #51afef; font-weight: bold;">datamodel-codegen</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--input</span> <span style="color: #98be65;">'$1'</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--input-file-type</span> json <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--class-name</span> <span style="color: #98be65;">'$2'</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--snake-case-field</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--allow-population-by-field-name</span> <span style="color: #98be65;">\</span>
+        <span style="color: #a9a1e1;">--output</span> <span style="color: #98be65;">'$3'</span>
+<span style="color: #51afef;">}</span>
+
+<span style="color: #51afef; font-weight: bold;">generate</span> <span style="color: #98be65;">"customer.json"</span> <span style="color: #98be65;">"BaseCustomer"</span> <span style="color: #98be65;">"base_customer.py"</span>
+<span style="color: #51afef; font-weight: bold;">generate</span> <span style="color: #98be65;">"donut.json"</span> <span style="color: #98be65;">"BaseDonut"</span> <span style="color: #98be65;">"base_donut.py"</span> <span style="color: #5B6268;"># Add the donut generation line</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel
+
+
+class BatterItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class Batters(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    batter: List[BatterItem]
+
+
+class ToppingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class BaseDonut(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+    name: str
+    ppu: float
+    batters: Batters
+    topping: List[ToppingItem]
+</pre>
+</div>
+
+<p>
+As you can likely see, this model creation engine will now accept any well structured payload and create models and factories quite rapidly.  Feel free to try it out with something painfully complex!
+</p>
+
+<p>
+Nevermind! You don&rsquo;t have to because I already did!  I searched stack overflow for &ldquo;super complex json&rdquo;, pasted into the project and roughly 2 minutes later:
+</p>
+</div>
+
+<div id="outline-container-org5ae3085" class="outline-3">
+<h3 id="org5ae3085"><span class="section-number-3">5.1.</span> Bonus model</h3>
+<div class="outline-text-3" id="text-5-1">
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel, Field
+
+
+class AceInhibitor(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class AntianginalItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Anticoagulant(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class BetaBlockerItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class DiureticItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class MineralItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Medication(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    ace_inhibitors: List[AceInhibitor] = Field(..., alias='aceInhibitors')
+    antianginal: List[AntianginalItem]
+    anticoagulants: List[Anticoagulant]
+    beta_blocker: List[BetaBlockerItem] = Field(..., alias='betaBlocker')
+    diuretic: List[DiureticItem]
+    mineral: List[MineralItem]
+
+
+class Lab(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class ImagingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class BaseMedications(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    medications: List[Medication]
+    labs: List[Lab]
+    imaging: List[ImagingItem]
+
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org60af84d" class="outline-2">
+<h2 id="org60af84d"><span class="section-number-2">6.</span> Conclusion</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+In conclusion, using the Python ecosystem to generate mock data from real-world JSON data can significantly reduce the time and effort required for unit testing. By using pydantic models and the pydantic-factories package, developers can easily generate mock data that matches the shape and structure of real-world data. This method is scalable, efficient, and encourages the use of well-formed models, leading to more stable and deterministic code.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Ashton Honnecke</p>
+<p class="date">Created: 2023-03-23 Thu 15:10</p>
+</div>
+</body>
+</html>
