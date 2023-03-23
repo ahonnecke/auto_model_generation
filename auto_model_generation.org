@@ -361,5 +361,133 @@ class BaseDonut(BaseModel):
 
 As you can likely see, this model creation engine will now accept any well structured payload and create models and factories quite rapidly.  Feel free to try it out with something painfully complex!
 
+Nevermind! You don't have to because I already did!  I searched stack overflow for "super complex json", pasted into the project and roughly 2 minutes later:
+
+*** Bonus model
+#+begin_src python
+from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel, Field
+
+
+class AceInhibitor(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class AntianginalItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Anticoagulant(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class BetaBlockerItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class DiureticItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class MineralItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Medication(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    ace_inhibitors: List[AceInhibitor] = Field(..., alias='aceInhibitors')
+    antianginal: List[AntianginalItem]
+    anticoagulants: List[Anticoagulant]
+    beta_blocker: List[BetaBlockerItem] = Field(..., alias='betaBlocker')
+    diuretic: List[DiureticItem]
+    mineral: List[MineralItem]
+
+
+class Lab(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class ImagingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class BaseMedications(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    medications: List[Medication]
+    labs: List[Lab]
+    imaging: List[ImagingItem]
+
+#+end_src
 ** Conclusion
 In conclusion, using the Python ecosystem to generate mock data from real-world JSON data can significantly reduce the time and effort required for unit testing. By using pydantic models and the pydantic-factories package, developers can easily generate mock data that matches the shape and structure of real-world data. This method is scalable, efficient, and encourages the use of well-formed models, leading to more stable and deterministic code.

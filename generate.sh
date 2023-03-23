@@ -12,3 +12,5 @@ generate() {
 
 generate "customer.json" "BaseCustomer" "base_customer.py"
 generate "donut.json" "BaseDonut" "base_donut.py"
+generate "problems.json" "BaseProblems" "base_problems.py"
+generate "medications.json" "BaseMedications" "base_medications.py"
