@@ -1,7 +1,9 @@
-#+title: Mocking arbitratily complex json
+#+title: Automating rote model creation from real JSON
 
 ** Introduction
 As a developer, you may come across a situation where you need to generate fake data for unit tests, but the data must be structured and complex enough to accurately mimic real-world data. The traditional approach of manually generating fake data, or even something that's partially automated (faker for instance) can be time-consuming and inefficient, especially when dealing with large and complex datasets, particularly nested data. This blog post will show you how to use the Python ecosystem to generate usable models and their associated test from real-world JSON data in a scalable and efficient manner. We will use datamodel-codegen and pydantic-factories to generate mock data.
+
+The code examples (and this .org file itself, how very meta) are available on github [[https://github.com/ahonnecke/auto_model_generation][Public repository for automatic model generation example project]]
 
 ** Create models with datamodel-codegen
 The first step is to get an example of the JSON data that you want to mock. For this example, let's assume an extremely trivial case in which we have a JSON file with data about customers that we want to mock for unit testing. We will look at how to use the datamodel-code-generator to generate a pydantic model from this JSON file.  This is not really representative of any sort of real world usage; there's little reason to build an object to contain one string.  We're focusing on the process in this step.
@@ -183,9 +185,36 @@ test_customer.py
 -> breakpoint()
 (Pdb) print(customers)
 [
-    Customer(name='aopjSxhgSTqWATggcDml', email='LzDicaTzPTgxHPEOyhFy', role='otJqpbeNjjRFSdvcoaWO', customer_id=1896), Customer(name='nvqooVXmZVzaYPWKZgSz', email='PBDygYKPQGZMLTbHFCVb', role='eDGHYCsSxchsKNwdcVDR', customer_id=5242), Customer(name='lDcjZAQarzSrReNAtCCB', email='QaTevLqUWPgsBSSvsthM', role='iAdOjDkrjZsBmFTamHwf', customer_id=9581),
-    ...
-    Customer(name='pfXuKloegkcnsDeAQKxx', email='ifaWVKWTpJMIukaJtJfV', role='NElmZelZqHupYuqVvIZf', customer_id=7674), Customer(name='EvAMzosabwOrKcXEsMjr', email='IXNVyOElYOCwwJLeTBmD', role='YNxfpRclnbLNNUSRJJRN', customer_id=6280)
+    Customer(
+        name="aopjSxhgSTqWATggcDml",
+        email="LzDicaTzPTgxHPEOyhFy",
+        role="otJqpbeNjjRFSdvcoaWO",
+        customer_id=1896,
+    ),
+    Customer(
+        name="nvqooVXmZVzaYPWKZgSz",
+        email="PBDygYKPQGZMLTbHFCVb",
+        role="eDGHYCsSxchsKNwdcVDR",
+        customer_id=5242,
+    ),
+    Customer(
+        name="lDcjZAQarzSrReNAtCCB",
+        email="QaTevLqUWPgsBSSvsthM",
+        role="iAdOjDkrjZsBmFTamHwf",
+        customer_id=9581,
+    ),
+    Customer(
+        name="pfXuKloegkcnsDeAQKxx",
+        email="ifaWVKWTpJMIukaJtJfV",
+        role="NElmZelZqHupYuqVvIZf",
+        customer_id=7674,
+    ),
+    Customer(
+        name="EvAMzosabwOrKcXEsMjr",
+        email="IXNVyOElYOCwwJLeTBmD",
+        role="YNxfpRclnbLNNUSRJJRN",
+        customer_id=6280,
+    ),
 ]
 (Pdb)
 #+end_src
@@ -213,7 +242,7 @@ class MockCustomerFactory(ModelFactory):
     role: str = FAKE.job()
 #+end_src
 
-Which will generate objects that look more like real data:
+Which will generate objects that look more like real data (below), but for a large majority of the uses, a random string will suffice.
 
 #+begin_src python
 Customer(
