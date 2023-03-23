@@ -1,0 +1,365 @@
+#+title: Mocking arbitratily complex json
+
+** Introduction
+As a developer, you may come across a situation where you need to generate fake data for unit tests, but the data must be structured and complex enough to accurately mimic real-world data. The traditional approach of manually generating fake data, or even something that's partially automated (faker for instance) can be time-consuming and inefficient, especially when dealing with large and complex datasets, particularly nested data. This blog post will show you how to use the Python ecosystem to generate usable models and their associated test from real-world JSON data in a scalable and efficient manner. We will use datamodel-codegen and pydantic-factories to generate mock data.
+
+** Create models with datamodel-codegen
+The first step is to get an example of the JSON data that you want to mock. For this example, let's assume an extremely trivial case in which we have a JSON file with data about customers that we want to mock for unit testing. We will look at how to use the datamodel-code-generator to generate a pydantic model from this JSON file.  This is not really representative of any sort of real world usage; there's little reason to build an object to contain one string.  We're focusing on the process in this step.
+
+*** Grab an example of real word data
+We are going to use a very simple json blob. To reiterate: this is overly simple for demonstration purposes.  If our data were really this trivial, we would not see much usefulness in automating the process.  In actual usage you will likely want to grab this from your logs or listen into a data stream to get a full payload.
+
+#+begin_src json
+{
+    "name": "Chester Tester",
+    "email": "chester@test.com",
+    "role": "code monkey",
+    "customerId": 1
+}
+#+end_src
+
+*** Install python utilities
+
+To install datamodel-code-generator, run the following command:
+
+#+begin_src bash
+pip install datamodel-code-generator
+#+end_src
+
+Once you have installed datamodel-code-generator, run the following command to generate a pydantic model from your JSON file:
+
+*** Generate the python model
+I'm providing the flags that I generally start with, but the utility supports many other options and formats.
+
+#+begin_src bash
+datamodel-codegen \
+    --input customer.json \
+    --output customer_model.py \
+    --input-file-type json \
+    --snake-case-field \
+    --allow-population-by-field-name \
+    --class-name Customer
+#+end_src
+
+these flags are used to specify the input and output files, define the input file type, and customize the output code by converting field names to snake_case, allowing population by field name, and specifying the name of the generated class.
+
+    - --input customer.json: This flag specifies the input file for the command, which in this case is customer.json.
+    - --output customer_model.py: This flag specifies the output file for the command, which in this case is customer_model.py.
+    - --input-file-type json: This flag specifies the type of input file being used, which in this case is JSON.
+    - --snake-case-field: This flag tells the code generator to convert all field names to snake_case in the output code.
+    - --allow-population-by-field-name: This flag allows the generated code to populate the model fields using field names, rather than using positional arguments.
+    - --class-name Customer: This flag specifies the name of the generated class in the output code, which in this case is Customer.
+
+This will generate a pydantic model named "Customer" in a file named "customer_model.py".  Of note, the incoming data is in camel case (which is not generally considered "pythonic", so we have added flags to rectify that; however, we should expect incoming data to be in camel case, so the model needs to support incoming camel case), this is reflected in the field alias below.
+
+#+begin_src python
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class Customer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+#+end_src
+
+*** Update the python model, by automating the generation
+
+
+Data changes, and it's reasonable to expect that any payload will grow and evolve over time, as such, our models should be able to grow and change with the upstream changes.  I'm lazy (see this post for evidence!) and I don't want to do anything more than once, so in order to support rapid, arbitrary and capricious changes, I like to script the model creation!  This has the additional benefit of documenting the options used for future reference.
+
+The following script references a json blob in the fixtures directory (which can also be used in other tests), and when executed, will populate (or repopulate) a model called BaseCustomer that can be extended (and doing so is recommended because it gives use the ability to regenerate the models easily and as needed). Bonus activity: you can put this script it your CI process and have it run, and then fail if the model output is different.
+
+The following bash script has a reusable function that can be reused on multiple models by adding another call to a different fixture.
+
+Model generation script:
+
+#+begin_src bash /generate.sh
+#!/usr/bin/env bash
+
+generate() {
+    datamodel-codegen \
+        --input '$1' \
+        --input-file-type json \
+        --class-name '$2' \
+        --snake-case-field \
+        --allow-population-by-field-name \
+        --output '$3'
+}
+
+generate "customer.json" "BaseCustomer" "base_customer.py"
+#+end_src
+
+The following code block has both the base and customer object in the same file, this is not very compatible with the above script that regenerates the file
+
+#+begin_src python
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+class BaseCustomer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+#+end_src
+
+#+begin_src python
+from base_customer import BaseCustomer
+
+class Customer(BaseCustomer):
+    """Extend the auto gen customer; this is where customization goes, manuan changes here will persist."""
+    pass
+#+end_src
+
+*** Create a factory
+**** Install packages
+Next, we need to install pydantic-factories, which is a package that provides a factory function for generating mock data for pydantic models.
+
+To install pydantic-factories, run the following command:
+
+#+begin_src bash
+pip install pydantic-factories
+#+end_src
+
+**** Write a Factory Class
+Now that we have our pydantic model and the pydantic-factories package, we can write a factory function that will generate mock data for our model.  The pydantic factories library will take a pydantic model and build mock instances that conform to the data types in the model.
+
+Here is an example factory function that generates a random customer:
+
+#+begin_src python
+from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+#+end_src
+
+As you can see, this is almost entirely boilerplate, the factory class name and the model class name are the only changes required. This factory function will generate a new mock Customer instance with a random value for each class member every time it is called.
+
+**** Use the Factory Class in Unit Tests
+On to the meat of the process.  This is the point of the process.
+
+To use our factory function in unit tests, we need to add it to our conftest.py file. The conftest.py file is a shared space for fixtures, so all the unit tests have access to the faked models, simple by adding the fixture name to the fuction signature.
+
+Here is an example conftest.py file that defines a fixture named "customer":
+
+#+begin_src python
+import pytest
+
+from customer_factory import MockCustomerFactory
+
+@pytest.fixture
+def customer():
+    return MockCustomerFactory.build()
+#+end_src
+
+Now we can use the "customer" fixture in our unit tests to generate an arbitrary number of Customer instances with random data.
+
+Here is an example test case that uses the "customer" fixture to generate 10 Customer instances:
+
+**** Run the tests
+
+#+begin_src python
+def test_generate_customers(customer):
+    customers = [customer for _ in range(25)]
+    assert len(customers) == 25
+    breakpoint()
+#+end_src
+
+#+begin_src bash
+ahonnecke@antonym:~/src/blog/mocking_json$ pytest .
+================== test session starts ==================
+test_customer.py
+> /home/ahonnecke/src/blog/mocking_json/test_customer.py(19)test_customer()->None
+-> breakpoint()
+(Pdb) print(customers)
+[
+    Customer(name='aopjSxhgSTqWATggcDml', email='LzDicaTzPTgxHPEOyhFy', role='otJqpbeNjjRFSdvcoaWO', customer_id=1896), Customer(name='nvqooVXmZVzaYPWKZgSz', email='PBDygYKPQGZMLTbHFCVb', role='eDGHYCsSxchsKNwdcVDR', customer_id=5242), Customer(name='lDcjZAQarzSrReNAtCCB', email='QaTevLqUWPgsBSSvsthM', role='iAdOjDkrjZsBmFTamHwf', customer_id=9581),
+    ...
+    Customer(name='pfXuKloegkcnsDeAQKxx', email='ifaWVKWTpJMIukaJtJfV', role='NElmZelZqHupYuqVvIZf', customer_id=7674), Customer(name='EvAMzosabwOrKcXEsMjr', email='IXNVyOElYOCwwJLeTBmD', role='YNxfpRclnbLNNUSRJJRN', customer_id=6280)
+]
+(Pdb)
+#+end_src
+
+Performing some trivial inspection of the resulting array of objects yields some populated data with sane-ish defaults:
+This gives us an arbitrary number of objects, with differing, albeit nonsensical data.
+
+
+** Applying shape to the data with faker
+Sometimes, a plain string or int is not enough, fortunately we can overwrite the mock data with yet another library from the ecosystem, `faker`.  I'm omitting the install step this time, and we will be altering non-generated code in the factory.  We're going to leave the customer id alone, but impose some structure on the remaining values.  I'm using faker here (because it's straightforward), but factory boy and other fuzzy mock data solutions can make this more robust.
+
+#+begin_src python
+from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+from faker import Faker
+
+FAKE = Faker() # Seed the fake data generator
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+
+    email: str = FAKE.email()
+    name: str = FAKE.name()
+    role: str = FAKE.job()
+#+end_src
+
+Which will generate objects that look more like real data:
+
+#+begin_src python
+Customer(
+        name="Elizabeth Rush",
+        email="michael72@example.org",
+        role="Geneticist, molecular",
+        customer_id=7732,
+    ),
+#+end_src
+
+** Benefits of Using Mock Data
+Using mock data generated from pydantic models has several benefits:
+
+    - It allows us to generate an arbitrary number of valid instantiations of a given model that match the shape of the original JSON data.
+    - It encourages the use of objects instead of dicts, which reduces data mutability and allows developers to write logic for well-formed models, making the code more stable and deterministic.
+    - It provides intrinsic motivation for developers to use structured models in place of mutable dicts, and it does this by making it easy to write tests because the models are almost free.
+    - It provides the ability to write and perform tests that use a large number of models with the same shape, but unique data values.
+    - It allows for strongly typing model variables, which enables static type checking with mypy and better autocompletion. This allows developers to focus on the intent of their code rather than the mechanics of how it works.
+
+** I was promised complex data
+If I'm going to have to manually write my mock factories, then what am I generating data for in the first place?
+
+When this process was first designed, it was used to map a very extensive, and frankly exhaustive data set for basic safety message payloads (the ones emitted by connected vehicle) and other specs that are very long and dry.  Those are so long and dry that they are actually a bit long for this post, so I went looking for some nested json, and came across the blob below (which I think we can all agree is long enough) that should expose the power of this process.
+
+Here's some donut defining json I found, and
+
+#+begin_src json /donut.json
+{
+	"id": "0001",
+	"type": "donut",
+	"name": "Cake",
+	"ppu": 0.55,
+	"batters": {
+		"batter": [{
+				"id": "1001",
+				"type": "Regular"
+			},
+			{
+				"id": "1002",
+				"type": "Chocolate"
+			},
+			{
+				"id": "1003",
+				"type": "Blueberry"
+			},
+			{
+				"id": "1004",
+				"type": "Devil's Food"
+			}
+		]
+	},
+	"topping": [{
+			"id": "5001",
+			"type": "None"
+		},
+		{
+			"id": "5002",
+			"type": "Glazed"
+		},
+		{
+			"id": "5005",
+			"type": "Sugar"
+		},
+		{
+			"id": "5007",
+			"type": "Powdered Sugar"
+		},
+		{
+			"id": "5006",
+			"type": "Chocolate with Sprinkles"
+		},
+		{
+			"id": "5003",
+			"type": "Chocolate"
+		},
+		{
+			"id": "5004",
+			"type": "Maple"
+		}
+	]
+}
+#+end_src
+
+If you will recall the generate script from above, we simply add one line:
+
+#+begin_src bash /generate.sh
+#!/usr/bin/env bash
+
+generate() {
+    datamodel-codegen \
+        --input '$1' \
+        --input-file-type json \
+        --class-name '$2' \
+        --snake-case-field \
+        --allow-population-by-field-name \
+        --output '$3'
+}
+
+generate "customer.json" "BaseCustomer" "base_customer.py"
+generate "donut.json" "BaseDonut" "base_donut.py" # Add the donut generation line
+#+end_src
+
+#+begin_src python /base_donut.py
+from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel
+
+
+class BatterItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class Batters(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    batter: List[BatterItem]
+
+
+class ToppingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class BaseDonut(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+    name: str
+    ppu: float
+    batters: Batters
+    topping: List[ToppingItem]
+#+end_src
+
+As you can likely see, this model creation engine will now accept any well structured payload and create models and factories quite rapidly.  Feel free to try it out with something painfully complex!
+
+** Conclusion
+In conclusion, using the Python ecosystem to generate mock data from real-world JSON data can significantly reduce the time and effort required for unit testing. By using pydantic models and the pydantic-factories package, developers can easily generate mock data that matches the shape and structure of real-world data. This method is scalable, efficient, and encourages the use of well-formed models, leading to more stable and deterministic code.
