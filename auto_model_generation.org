@@ -54,7 +54,7 @@ these flags are used to specify the input and output files, define the input fil
 
 This will generate a pydantic model named "Customer" in a file named "customer_model.py".  Of note, the incoming data is in camel case (which is not generally considered "pythonic", so we have added flags to rectify that; however, we should expect incoming data to be in camel case, so the model needs to support incoming camel case), this is reflected in the field alias below.
 
-#+begin_src python
+#+begin_src python :exports none
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -99,7 +99,7 @@ generate "customer.json" "BaseCustomer" "base_customer.py"
 
 The following code block has both the base and customer object in the same file, this is not very compatible with the above script that regenerates the file
 
-#+begin_src python
+#+begin_src python :exports none
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -114,7 +114,7 @@ class BaseCustomer(BaseModel):
     customer_id: int = Field(..., alias='customerId')
 #+end_src
 
-#+begin_src python
+#+begin_src python :exports none
 from base_customer import BaseCustomer
 
 class Customer(BaseCustomer):
@@ -137,7 +137,7 @@ Now that we have our pydantic model and the pydantic-factories package, we can w
 
 Here is an example factory function that generates a random customer:
 
-#+begin_src python
+#+begin_src python :exports none
 from customer_model import Customer
 from pydantic_factories import ModelFactory
 
@@ -154,7 +154,7 @@ To use our factory function in unit tests, we need to add it to our conftest.py 
 
 Here is an example conftest.py file that defines a fixture named "customer":
 
-#+begin_src python
+#+begin_src python :exports none
 import pytest
 
 from customer_factory import MockCustomerFactory
@@ -170,7 +170,7 @@ Here is an example test case that uses the "customer" fixture to generate 10 Cus
 
 **** Run the tests
 
-#+begin_src python
+#+begin_src python :exports none
 def test_generate_customers(customer):
     customers = [customer for _ in range(25)]
     assert len(customers) == 25
@@ -226,7 +226,7 @@ This gives us an arbitrary number of objects, with differing, albeit nonsensical
 ** Applying shape to the data with faker
 Sometimes, a plain string or int is not enough, fortunately we can overwrite the mock data with yet another library from the ecosystem, `faker`.  I'm omitting the install step this time, and we will be altering non-generated code in the factory.  We're going to leave the customer id alone, but impose some structure on the remaining values.  I'm using faker here (because it's straightforward), but factory boy and other fuzzy mock data solutions can make this more robust.
 
-#+begin_src python
+#+begin_src python :exports none
 from customer_model import Customer
 from pydantic_factories import ModelFactory
 
@@ -244,7 +244,7 @@ class MockCustomerFactory(ModelFactory):
 
 Which will generate objects that look more like real data (below), but for a large majority of the uses, a random string will suffice.
 
-#+begin_src python
+#+begin_src python :exports none
 Customer(
         name="Elizabeth Rush",
         email="michael72@example.org",
@@ -345,7 +345,7 @@ generate "customer.json" "BaseCustomer" "base_customer.py"
 generate "donut.json" "BaseDonut" "base_donut.py" # Add the donut generation line
 #+end_src
 
-#+begin_src python /base_donut.py
+#+begin_src python :exports none
 from __future__ import annotations
 
 from typing import List
@@ -393,7 +393,7 @@ As you can likely see, this model creation engine will now accept any well struc
 Nevermind! You don't have to because I already did!  I searched stack overflow for "super complex json", pasted into the project and roughly 2 minutes later:
 
 *** Bonus model
-#+begin_src python
+#+begin_src python :exports none
 from __future__ import annotations
 
 from typing import List
