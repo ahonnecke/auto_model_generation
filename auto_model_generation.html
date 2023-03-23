@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2023-03-23 Thu 15:20 -->
+<!-- 2023-03-23 Thu 15:22 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Automating rote model creation from real JSON</title>
@@ -201,37 +201,37 @@
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org6b56029">1. Introduction</a></li>
-<li><a href="#org2e788e4">2. Create models with datamodel-codegen</a>
+<li><a href="#org718854b">1. Introduction</a></li>
+<li><a href="#orgd8b6e8e">2. Create models with datamodel-codegen</a>
 <ul>
-<li><a href="#org95160c4">2.1. Grab an example of real word data</a></li>
-<li><a href="#org792834e">2.2. Install python utilities</a></li>
-<li><a href="#orgc723117">2.3. Generate the python model</a></li>
-<li><a href="#orga504cf0">2.4. Update the python model, by automating the generation</a></li>
-<li><a href="#org2cfa3de">2.5. Create a factory</a>
+<li><a href="#org5146b34">2.1. Grab an example of real word data</a></li>
+<li><a href="#org8136e9a">2.2. Install python utilities</a></li>
+<li><a href="#orgfe26c96">2.3. Generate the python model</a></li>
+<li><a href="#org2992afa">2.4. Update the python model, by automating the generation</a></li>
+<li><a href="#orgedb813b">2.5. Create a factory</a>
 <ul>
-<li><a href="#orgf37fd6e">2.5.1. Install packages</a></li>
-<li><a href="#org3a1cf60">2.5.2. Write a Factory Class</a></li>
-<li><a href="#orgbed5573">2.5.3. Use the Factory Class in Unit Tests</a></li>
-<li><a href="#orgd485f5f">2.5.4. Run the tests</a></li>
+<li><a href="#org0a6cd13">2.5.1. Install packages</a></li>
+<li><a href="#org8cc4790">2.5.2. Write a Factory Class</a></li>
+<li><a href="#orgd0f7ef8">2.5.3. Use the Factory Class in Unit Tests</a></li>
+<li><a href="#org2eaea9a">2.5.4. Run the tests</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#orgec5efab">3. Applying shape to the data with faker</a></li>
-<li><a href="#org61faeef">4. Benefits of Using Mock Data</a></li>
-<li><a href="#org2df73b7">5. I was promised complex data</a>
+<li><a href="#orgb682212">3. Applying shape to the data with faker</a></li>
+<li><a href="#orgcb36f2c">4. Benefits of Using Mock Data</a></li>
+<li><a href="#org750c472">5. I was promised complex data</a>
 <ul>
-<li><a href="#org43ea16a">5.1. Bonus model</a></li>
+<li><a href="#org262b7cb">5.1. Bonus model</a></li>
 </ul>
 </li>
-<li><a href="#org3b68375">6. Conclusion</a></li>
+<li><a href="#orgbe0d773">6. Conclusion</a></li>
 </ul>
 </div>
 </div>
 
-<div id="outline-container-org6b56029" class="outline-2">
-<h2 id="org6b56029"><span class="section-number-2">1.</span> Introduction</h2>
+<div id="outline-container-org718854b" class="outline-2">
+<h2 id="org718854b"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-1">
 <p>
 As a developer, you may come across a situation where you need to generate fake data for unit tests, but the data must be structured and complex enough to accurately mimic real-world data. The traditional approach of manually generating fake data, or even something that&rsquo;s partially automated (faker for instance) can be time-consuming and inefficient, especially when dealing with large and complex datasets, particularly nested data. This blog post will show you how to use the Python ecosystem to generate usable models and their associated test from real-world JSON data in a scalable and efficient manner. We will use datamodel-codegen and pydantic-factories to generate mock data.
@@ -243,16 +243,16 @@ The code examples (and this .org file itself, how very meta) are available on gi
 </div>
 </div>
 
-<div id="outline-container-org2e788e4" class="outline-2">
-<h2 id="org2e788e4"><span class="section-number-2">2.</span> Create models with datamodel-codegen</h2>
+<div id="outline-container-orgd8b6e8e" class="outline-2">
+<h2 id="orgd8b6e8e"><span class="section-number-2">2.</span> Create models with datamodel-codegen</h2>
 <div class="outline-text-2" id="text-2">
 <p>
 The first step is to get an example of the JSON data that you want to mock. For this example, let&rsquo;s assume an extremely trivial case in which we have a JSON file with data about customers that we want to mock for unit testing. We will look at how to use the datamodel-code-generator to generate a pydantic model from this JSON file.  This is not really representative of any sort of real world usage; there&rsquo;s little reason to build an object to contain one string.  We&rsquo;re focusing on the process in this step.
 </p>
 </div>
 
-<div id="outline-container-org95160c4" class="outline-3">
-<h3 id="org95160c4"><span class="section-number-3">2.1.</span> Grab an example of real word data</h3>
+<div id="outline-container-org5146b34" class="outline-3">
+<h3 id="org5146b34"><span class="section-number-3">2.1.</span> Grab an example of real word data</h3>
 <div class="outline-text-3" id="text-2-1">
 <p>
 We are going to use a very simple json blob. To reiterate: this is overly simple for demonstration purposes.  If our data were really this trivial, we would not see much usefulness in automating the process.  In actual usage you will likely want to grab this from your logs or listen into a data stream to get a full payload.
@@ -270,8 +270,8 @@ We are going to use a very simple json blob. To reiterate: this is overly simple
 </div>
 </div>
 
-<div id="outline-container-org792834e" class="outline-3">
-<h3 id="org792834e"><span class="section-number-3">2.2.</span> Install python utilities</h3>
+<div id="outline-container-org8136e9a" class="outline-3">
+<h3 id="org8136e9a"><span class="section-number-3">2.2.</span> Install python utilities</h3>
 <div class="outline-text-3" id="text-2-2">
 <p>
 To install datamodel-code-generator, run the following command:
@@ -288,8 +288,8 @@ Once you have installed datamodel-code-generator, run the following command to g
 </div>
 </div>
 
-<div id="outline-container-orgc723117" class="outline-3">
-<h3 id="orgc723117"><span class="section-number-3">2.3.</span> Generate the python model</h3>
+<div id="outline-container-orgfe26c96" class="outline-3">
+<h3 id="orgfe26c96"><span class="section-number-3">2.3.</span> Generate the python model</h3>
 <div class="outline-text-3" id="text-2-3">
 <p>
 I&rsquo;m providing the flags that I generally start with, but the utility supports many other options and formats.
@@ -322,11 +322,28 @@ these flags are used to specify the input and output files, define the input fil
 <p>
 This will generate a pydantic model named &ldquo;Customer&rdquo; in a file named &ldquo;customer<sub>model.py</sub>&rdquo;.  Of note, the incoming data is in camel case (which is not generally considered &ldquo;pythonic&rdquo;, so we have added flags to rectify that; however, we should expect incoming data to be in camel case, so the model needs to support incoming camel case), this is reflected in the field alias below.
 </p>
+
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+
+class Customer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-orga504cf0" class="outline-3">
-<h3 id="orga504cf0"><span class="section-number-3">2.4.</span> Update the python model, by automating the generation</h3>
+<div id="outline-container-org2992afa" class="outline-3">
+<h3 id="org2992afa"><span class="section-number-3">2.4.</span> Update the python model, by automating the generation</h3>
 <div class="outline-text-3" id="text-2-4">
 <p>
 Data changes, and it&rsquo;s reasonable to expect that any payload will grow and evolve over time, as such, our models should be able to grow and change with the upstream changes.  I&rsquo;m lazy (see this post for evidence!) and I don&rsquo;t want to do anything more than once, so in order to support rapid, arbitrary and capricious changes, I like to script the model creation!  This has the additional benefit of documenting the options used for future reference.
@@ -364,15 +381,40 @@ Model generation script:
 <p>
 The following code block has both the base and customer object in the same file, this is not very compatible with the above script that regenerates the file
 </p>
+
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from pydantic import BaseModel, Field
+
+class BaseCustomer(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    email: str
+    role: str
+    customer_id: int = Field(..., alias='customerId')
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-py">from base_customer import BaseCustomer
+
+class Customer(BaseCustomer):
+    """Extend the auto gen customer; this is where customization goes, manuan changes here will persist."""
+    pass
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-org2cfa3de" class="outline-3">
-<h3 id="org2cfa3de"><span class="section-number-3">2.5.</span> Create a factory</h3>
+<div id="outline-container-orgedb813b" class="outline-3">
+<h3 id="orgedb813b"><span class="section-number-3">2.5.</span> Create a factory</h3>
 <div class="outline-text-3" id="text-2-5">
 </div>
-<div id="outline-container-orgf37fd6e" class="outline-4">
-<h4 id="orgf37fd6e"><span class="section-number-4">2.5.1.</span> Install packages</h4>
+<div id="outline-container-org0a6cd13" class="outline-4">
+<h4 id="org0a6cd13"><span class="section-number-4">2.5.1.</span> Install packages</h4>
 <div class="outline-text-4" id="text-2-5-1">
 <p>
 Next, we need to install pydantic-factories, which is a package that provides a factory function for generating mock data for pydantic models.
@@ -389,8 +431,8 @@ To install pydantic-factories, run the following command:
 </div>
 </div>
 
-<div id="outline-container-org3a1cf60" class="outline-4">
-<h4 id="org3a1cf60"><span class="section-number-4">2.5.2.</span> Write a Factory Class</h4>
+<div id="outline-container-org8cc4790" class="outline-4">
+<h4 id="org8cc4790"><span class="section-number-4">2.5.2.</span> Write a Factory Class</h4>
 <div class="outline-text-4" id="text-2-5-2">
 <p>
 Now that we have our pydantic model and the pydantic-factories package, we can write a factory function that will generate mock data for our model.  The pydantic factories library will take a pydantic model and build mock instances that conform to the data types in the model.
@@ -400,14 +442,23 @@ Now that we have our pydantic model and the pydantic-factories package, we can w
 Here is an example factory function that generates a random customer:
 </p>
 
+<div class="org-src-container">
+<pre class="src src-py">from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+</pre>
+</div>
+
 <p>
 As you can see, this is almost entirely boilerplate, the factory class name and the model class name are the only changes required. This factory function will generate a new mock Customer instance with a random value for each class member every time it is called.
 </p>
 </div>
 </div>
 
-<div id="outline-container-orgbed5573" class="outline-4">
-<h4 id="orgbed5573"><span class="section-number-4">2.5.3.</span> Use the Factory Class in Unit Tests</h4>
+<div id="outline-container-orgd0f7ef8" class="outline-4">
+<h4 id="orgd0f7ef8"><span class="section-number-4">2.5.3.</span> Use the Factory Class in Unit Tests</h4>
 <div class="outline-text-4" id="text-2-5-3">
 <p>
 On to the meat of the process.  This is the point of the process.
@@ -421,6 +472,17 @@ To use our factory function in unit tests, we need to add it to our conftest.py 
 Here is an example conftest.py file that defines a fixture named &ldquo;customer&rdquo;:
 </p>
 
+<div class="org-src-container">
+<pre class="src src-py">import pytest
+
+from customer_factory import MockCustomerFactory
+
+@pytest.fixture
+def customer():
+    return MockCustomerFactory.build()
+</pre>
+</div>
+
 <p>
 Now we can use the &ldquo;customer&rdquo; fixture in our unit tests to generate an arbitrary number of Customer instances with random data.
 </p>
@@ -431,9 +493,17 @@ Here is an example test case that uses the &ldquo;customer&rdquo; fixture to gen
 </div>
 </div>
 
-<div id="outline-container-orgd485f5f" class="outline-4">
-<h4 id="orgd485f5f"><span class="section-number-4">2.5.4.</span> Run the tests</h4>
+<div id="outline-container-org2eaea9a" class="outline-4">
+<h4 id="org2eaea9a"><span class="section-number-4">2.5.4.</span> Run the tests</h4>
 <div class="outline-text-4" id="text-2-5-4">
+<div class="org-src-container">
+<pre class="src src-py">def test_generate_customers(customer):
+    customers = [customer for _ in range(25)]
+    assert len(customers) == 25
+    breakpoint()
+</pre>
+</div>
+
 <div class="org-src-container">
 <pre class="src src-bash">ahonnecke@antonym:~/src/blog/mocking_json<span style="color: #51afef;">$</span> <span style="color: #a9a1e1; font-style: italic;">pytest</span> .
 <span style="color: #51afef; font-weight: bold;">==================</span> test session starts ==================
@@ -487,21 +557,48 @@ This gives us an arbitrary number of objects, with differing, albeit nonsensical
 </div>
 
 
-<div id="outline-container-orgec5efab" class="outline-2">
-<h2 id="orgec5efab"><span class="section-number-2">3.</span> Applying shape to the data with faker</h2>
+<div id="outline-container-orgb682212" class="outline-2">
+<h2 id="orgb682212"><span class="section-number-2">3.</span> Applying shape to the data with faker</h2>
 <div class="outline-text-2" id="text-3">
 <p>
 Sometimes, a plain string or int is not enough, fortunately we can overwrite the mock data with yet another library from the ecosystem, `faker`.  I&rsquo;m omitting the install step this time, and we will be altering non-generated code in the factory.  We&rsquo;re going to leave the customer id alone, but impose some structure on the remaining values.  I&rsquo;m using faker here (because it&rsquo;s straightforward), but factory boy and other fuzzy mock data solutions can make this more robust.
 </p>
 
+<div class="org-src-container">
+<pre class="src src-py">from customer_model import Customer
+from pydantic_factories import ModelFactory
+
+from faker import Faker
+
+FAKE = Faker() # Seed the fake data generator
+
+class MockCustomerFactory(ModelFactory):
+    __model__ = Customer
+
+    email: str = FAKE.email()
+    name: str = FAKE.name()
+    role: str = FAKE.job()
+</pre>
+</div>
+
 <p>
 Which will generate objects that look more like real data (below), but for a large majority of the uses, a random string will suffice.
 </p>
+
+<div class="org-src-container">
+<pre class="src src-py">Customer(
+        name="Elizabeth Rush",
+        email="michael72@example.org",
+        role="Geneticist, molecular",
+        customer_id=7732,
+    ),
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-org61faeef" class="outline-2">
-<h2 id="org61faeef"><span class="section-number-2">4.</span> Benefits of Using Mock Data</h2>
+<div id="outline-container-orgcb36f2c" class="outline-2">
+<h2 id="orgcb36f2c"><span class="section-number-2">4.</span> Benefits of Using Mock Data</h2>
 <div class="outline-text-2" id="text-4">
 <p>
 Using mock data generated from pydantic models has several benefits:
@@ -517,8 +614,8 @@ Using mock data generated from pydantic models has several benefits:
 </div>
 </div>
 
-<div id="outline-container-org2df73b7" class="outline-2">
-<h2 id="org2df73b7"><span class="section-number-2">5.</span> I was promised complex data</h2>
+<div id="outline-container-org750c472" class="outline-2">
+<h2 id="org750c472"><span class="section-number-2">5.</span> I was promised complex data</h2>
 <div class="outline-text-2" id="text-5">
 <p>
 If I&rsquo;m going to have to manually write my mock factories, then what am I generating data for in the first place?
@@ -612,6 +709,50 @@ If you will recall the generate script from above, we simply add one line:
 </pre>
 </div>
 
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel
+
+
+class BatterItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class Batters(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    batter: List[BatterItem]
+
+
+class ToppingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+
+
+class BaseDonut(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    id: str
+    type: str
+    name: str
+    ppu: float
+    batters: Batters
+    topping: List[ToppingItem]
+</pre>
+</div>
+
 <p>
 As you can likely see, this model creation engine will now accept any well structured payload and create models and factories quite rapidly.  Feel free to try it out with something painfully complex!
 </p>
@@ -621,12 +762,140 @@ Nevermind! You don&rsquo;t have to because I already did!  I searched stack over
 </p>
 </div>
 
-<div id="outline-container-org43ea16a" class="outline-3">
-<h3 id="org43ea16a"><span class="section-number-3">5.1.</span> Bonus model</h3>
+<div id="outline-container-org262b7cb" class="outline-3">
+<h3 id="org262b7cb"><span class="section-number-3">5.1.</span> Bonus model</h3>
+<div class="outline-text-3" id="text-5-1">
+<div class="org-src-container">
+<pre class="src src-py">from __future__ import annotations
+
+from typing import List
+
+from pydantic import BaseModel, Field
+
+
+class AceInhibitor(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class AntianginalItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Anticoagulant(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class BetaBlockerItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class DiureticItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class MineralItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    strength: str
+    dose: str
+    route: str
+    sig: str
+    pill_count: str = Field(..., alias='pillCount')
+    refills: str
+
+
+class Medication(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    ace_inhibitors: List[AceInhibitor] = Field(..., alias='aceInhibitors')
+    antianginal: List[AntianginalItem]
+    anticoagulants: List[Anticoagulant]
+    beta_blocker: List[BetaBlockerItem] = Field(..., alias='betaBlocker')
+    diuretic: List[DiureticItem]
+    mineral: List[MineralItem]
+
+
+class Lab(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class ImagingItem(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    name: str
+    time: str
+    location: str
+
+
+class BaseMedications(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    medications: List[Medication]
+    labs: List[Lab]
+    imaging: List[ImagingItem]
+
+</pre>
 </div>
 </div>
-<div id="outline-container-org3b68375" class="outline-2">
-<h2 id="org3b68375"><span class="section-number-2">6.</span> Conclusion</h2>
+</div>
+</div>
+<div id="outline-container-orgbe0d773" class="outline-2">
+<h2 id="orgbe0d773"><span class="section-number-2">6.</span> Conclusion</h2>
 <div class="outline-text-2" id="text-6">
 <p>
 In conclusion, using the Python ecosystem to generate mock data from real-world JSON data can significantly reduce the time and effort required for unit testing. By using pydantic models and the pydantic-factories package, developers can easily generate mock data that matches the shape and structure of real-world data. This method is scalable, efficient, and encourages the use of well-formed models, leading to more stable and deterministic code.
@@ -636,7 +905,7 @@ In conclusion, using the Python ecosystem to generate mock data from real-world 
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Ashton Honnecke</p>
-<p class="date">Created: 2023-03-23 Thu 15:20</p>
+<p class="date">Created: 2023-03-23 Thu 15:22</p>
 </div>
 </body>
 </html>
